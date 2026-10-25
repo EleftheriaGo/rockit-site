@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Rock-It - Reset password</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#121214;color:#ededef;font:14px Inter,-apple-system,'Segoe UI',sans-serif}
+.card{width:360px;padding:24px;background:#1b1b1f;border:1px solid #2e2e34;border-radius:10px}
+h1{font-size:16px;margin:0 0 16px}label{display:block;font-size:12px;color:#a0a0a8;margin:0 0 6px}
+input{width:100%;box-sizing:border-box;padding:8px 10px;margin:0 0 12px;background:#121214;color:#ededef;border:1px solid #2e2e34;border-radius:6px;font:inherit}
+input:focus{outline:none;border-color:#5e6ad2}
+button{width:100%;padding:9px;background:#5e6ad2;color:#fff;border:0;border-radius:6px;font:inherit;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}.msg{margin:12px 0 0;font-size:13px;color:#a0a0a8}.bad{color:#f85149}.ok{color:#3fb950}
+</style></head><body>
+<div class="card"><h1>Choose a new password</h1>
+<form id="f"><label>New password</label><input id="p1" type="password" minlength="8" maxlength="128" required>
+<label>Repeat password</label><input id="p2" type="password" minlength="8" maxlength="128" required>
+<button id="b" type="submit" disabled>Update password</button></form>
+<p id="m" class="msg">Checking your link...</p></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+var sb = supabase.createClient('https://zkfvhqxfdnlnhsgqilpw.supabase.co', 'sb_publishable_V3bu4gZrfP56-Uh1Rcg7YQ_JjDoB-L9');
+var m = document.getElementById('m'), b = document.getElementById('b'), ready = false;
+sb.auth.onAuthStateChange(function (ev, session) {
+  if ((ev === 'PASSWORD_RECOVERY' || ev === 'SIGNED_IN') && session) { ready = true; b.disabled = false; m.textContent = ''; }
+});
+setTimeout(function () { if (!ready) { m.textContent = 'This link is invalid or has expired. Request a new one from the app.'; m.className = 'msg bad'; } }, 4000);
+document.getElementById('f').onsubmit = async function (e) {
+  e.preventDefault();
+  var p1 = document.getElementById('p1').value, p2 = document.getElementById('p2').value;
+  if (p1 !== p2) { m.textContent = 'Passwords do not match.'; m.className = 'msg bad'; return; }
+  b.disabled = true;
+  var r = await sb.auth.updateUser({ password: p1 });
+  if (r.error) { m.textContent = r.error.message; m.className = 'msg bad'; b.disabled = false; return; }
+  await sb.auth.signOut();
+  m.textContent = 'Password updated. Go back to Rock-It and sign in.'; m.className = 'msg ok';
+  document.getElementById('f').style.display = 'none';
+};
+</script></body></html>
