@@ -11,6 +11,7 @@ button{width:100%;padding:9px;background:#5e6ad2;color:#fff;border:0;border-radi
 button:disabled{opacity:.5;cursor:default}.msg{margin:12px 0 0;font-size:13px;color:#a0a0a8}.bad{color:#f85149}.ok{color:#3fb950}
 </style></head><body>
 <div class="card"><h1>Choose a new password</h1>
+<p class="msg" style="margin:0 0 14px">At least 8 characters with upper and lower case letters and a number.</p>
 <form id="f"><label>New password</label><input id="p1" type="password" minlength="8" maxlength="128" required>
 <label>Repeat password</label><input id="p2" type="password" minlength="8" maxlength="128" required>
 <button id="b" type="submit" disabled>Update password</button></form>
@@ -23,13 +24,20 @@ sb.auth.onAuthStateChange(function (ev, session) {
   if ((ev === 'PASSWORD_RECOVERY' || ev === 'SIGNED_IN') && session) { ready = true; b.disabled = false; m.textContent = ''; }
 });
 setTimeout(function () { if (!ready) { m.textContent = 'This link is invalid or has expired. Request a new one from the app.'; m.className = 'msg bad'; } }, 4000);
+function friendly(text) {
+  var t = String(text || '');
+  if (/password should contain/i.test(t) || /password.*at least/i.test(t)) return 'Password must be at least 8 characters and include upper and lower case letters and a number.';
+  if (/same.*password|different from the old/i.test(t)) return 'Choose a password you have not used before.';
+  if (/expired|invalid/i.test(t)) return 'This link has expired. Request a new one from the app.';
+  return t || 'Something went wrong.';
+}
 document.getElementById('f').onsubmit = async function (e) {
   e.preventDefault();
   var p1 = document.getElementById('p1').value, p2 = document.getElementById('p2').value;
   if (p1 !== p2) { m.textContent = 'Passwords do not match.'; m.className = 'msg bad'; return; }
   b.disabled = true;
   var r = await sb.auth.updateUser({ password: p1 });
-  if (r.error) { m.textContent = r.error.message; m.className = 'msg bad'; b.disabled = false; return; }
+  if (r.error) { m.textContent = friendly(r.error.message); m.className = 'msg bad'; b.disabled = false; return; }
   await sb.auth.signOut();
   m.textContent = 'Password updated. Go back to Rock-It and sign in.'; m.className = 'msg ok';
   document.getElementById('f').style.display = 'none';
