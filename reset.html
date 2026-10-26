@@ -2,34 +2,54 @@
 <html lang="en"><head><meta charset="utf-8"><title>Rock-It - Reset password</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#121214;color:#ededef;font:14px Inter,-apple-system,'Segoe UI',sans-serif}
-.card{width:360px;padding:24px;background:#1b1b1f;border:1px solid #2e2e34;border-radius:10px}
-h1{font-size:16px;margin:0 0 16px}label{display:block;font-size:12px;color:#a0a0a8;margin:0 0 6px}
-input{width:100%;box-sizing:border-box;padding:8px 10px;margin:0 0 12px;background:#121214;color:#ededef;border:1px solid #2e2e34;border-radius:6px;font:inherit}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#121214;color:#ededef;font:14px Inter,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif}
+.card{width:400px;max-width:calc(100vw - 32px);background:#1b1b1f;border:1px solid #2e2e34;border-radius:10px;overflow:hidden}
+.brand{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid #2e2e34;font-weight:600;letter-spacing:.3px}
+.brand img{height:28px;display:block}
+.body{padding:20px}
+h1{font-size:16px;margin:0 0 6px}
+.hint{margin:0 0 16px;color:#a0a0a8;line-height:1.5}
+label{display:block;font-size:12px;font-weight:500;color:#a0a0a8;margin:0 0 6px}
+input{width:100%;box-sizing:border-box;padding:8px 10px;margin:0 0 12px;background:#121214;color:#ededef;border:1px solid #2e2e34;border-radius:6px;font:inherit;font-size:14px}
 input:focus{outline:none;border-color:#5e6ad2}
 button{width:100%;padding:9px;background:#5e6ad2;color:#fff;border:0;border-radius:6px;font:inherit;font-weight:600;cursor:pointer}
-button:disabled{opacity:.5;cursor:default}.msg{margin:12px 0 0;font-size:13px;color:#a0a0a8}.bad{color:#f85149}.ok{color:#3fb950}
+button:hover:not(:disabled){background:#6f7ae0}button:disabled{opacity:.5;cursor:default}
+.msg{margin:12px 0 0;font-size:13px;color:#a0a0a8;line-height:1.45}.bad{color:#f85149}.ok{color:#3fb950}
+.foot{padding:12px 20px;border-top:1px solid #2e2e34;font-size:12px;color:#6e6e78}
+.foot a{color:#6e6e78}
 </style></head><body>
-<div class="card"><h1>Choose a new password</h1>
-<p class="msg" style="margin:0 0 14px">At least 8 characters with upper and lower case letters and a number.</p>
-<form id="f"><label>New password</label><input id="p1" type="password" minlength="8" maxlength="128" required>
-<label>Repeat password</label><input id="p2" type="password" minlength="8" maxlength="128" required>
-<button id="b" type="submit" disabled>Update password</button></form>
-<p id="m" class="msg">Checking your link...</p></div>
+<div class="card">
+  <div class="brand"><img src="logo-mark.png" alt="" onerror="this.remove()">Rock-It</div>
+  <div class="body">
+    <h1>Choose a new password</h1>
+    <p class="hint">At least 8 characters with upper and lower case letters and a number.</p>
+    <form id="f">
+      <label for="p1">New password</label><input id="p1" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
+      <label for="p2">Repeat password</label><input id="p2" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
+      <button id="b" type="submit" disabled>Update password</button>
+    </form>
+    <p id="m" class="msg">Checking your link...</p>
+  </div>
+  <div class="foot">Rockit Software &middot; <a href="https://www.myrockitapp.com">myrockitapp.com</a> &middot; <a href="mailto:support@myrockitapp.com">support@myrockitapp.com</a></div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 var sb = supabase.createClient('https://zkfvhqxfdnlnhsgqilpw.supabase.co', 'sb_publishable_V3bu4gZrfP56-Uh1Rcg7YQ_JjDoB-L9');
 var m = document.getElementById('m'), b = document.getElementById('b'), ready = false;
-sb.auth.onAuthStateChange(function (ev, session) {
-  if ((ev === 'PASSWORD_RECOVERY' || ev === 'SIGNED_IN') && session) { ready = true; b.disabled = false; m.textContent = ''; }
-});
-setTimeout(function () { if (!ready) { m.textContent = 'This link is invalid or has expired. Request a new one from the app.'; m.className = 'msg bad'; } }, 4000);
 function friendly(text) {
   var t = String(text || '');
   if (/password should contain/i.test(t) || /password.*at least/i.test(t)) return 'Password must be at least 8 characters and include upper and lower case letters and a number.';
   if (/same.*password|different from the old/i.test(t)) return 'Choose a password you have not used before.';
   if (/expired|invalid/i.test(t)) return 'This link has expired. Request a new one from the app.';
   return t || 'Something went wrong.';
+}
+sb.auth.onAuthStateChange(function (ev, session) {
+  if ((ev === 'PASSWORD_RECOVERY' || ev === 'SIGNED_IN') && session) { ready = true; b.disabled = false; m.textContent = ''; }
+});
+if (/error=/.test(location.hash) || /error=/.test(location.search)) {
+  m.textContent = 'This link is invalid or has expired. Request a new one from the app.'; m.className = 'msg bad';
+} else {
+  setTimeout(function () { if (!ready) { m.textContent = 'This link is invalid or has expired. Request a new one from the app.'; m.className = 'msg bad'; } }, 8000);
 }
 document.getElementById('f').onsubmit = async function (e) {
   e.preventDefault();
