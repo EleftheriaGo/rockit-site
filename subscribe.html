@@ -9,12 +9,14 @@
     .card { width: 400px; max-width: calc(100vw - 32px); box-sizing: border-box; padding: 24px; background: #1b1b1f; border: 1px solid #2e2e34; border-radius: 10px; }
     h1 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
     p { margin: 0 0 20px; color: #a0a0a8; line-height: 1.5; }
-    .price { font-size: 28px; font-weight: 600; margin-bottom: 20px; }
-    .price span { font-size: 13px; color: #a0a0a8; font-weight: 400; }
-    button { width: 100%; padding: 9px; font: inherit; font-weight: 600; border: 0; border-radius: 6px; background: #5e6ad2; color: #fff; cursor: pointer; }
-    button:hover:not(:disabled) { background: #6f7ae0; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .note { font-size: 12px; color: #6e6e78; margin-top: 12px; }
+    .plans { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+    .plan { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 14px; font: inherit; color: #ededef; text-align: left; background: #121214; border: 1px solid #2e2e34; border-radius: 6px; cursor: pointer; }
+    .plan:hover:not(:disabled) { border-color: #5e6ad2; background: #232328; }
+    .plan:disabled { opacity: 0.5; cursor: not-allowed; }
+    .plan-name { font-weight: 600; }
+    .plan-name em { font-style: normal; font-weight: 500; font-size: 11px; color: #3fb950; margin-left: 8px; }
+    .plan-price { font-size: 18px; font-weight: 600; }
+    .plan-price span { font-size: 12px; color: #a0a0a8; font-weight: 400; }    .note { font-size: 12px; color: #6e6e78; margin-top: 12px; }
     .error { font-size: 13px; color: #f85149; margin-top: 12px; display: none; }
   </style>
 </head>
@@ -22,24 +24,35 @@
   <div class="card">
     <h1>Rock-It</h1>
     <p>Professional lighting management for touring productions.</p>
-    <div class="price">$20 <span>/ month</span></div>
-    <button id="subscribe-btn" disabled>Subscribe</button>
+    <div class="plans">
+      <button class="plan" id="plan-monthly" data-plan="monthly" disabled>
+        <span class="plan-name">Monthly</span>
+        <span class="plan-price">$20 <span>/ month</span></span>
+      </button>
+      <button class="plan" id="plan-yearly" data-plan="yearly" disabled>
+        <span class="plan-name">Yearly <em>2 months free</em></span>
+        <span class="plan-price">$200 <span>/ year</span></span>
+      </button>
+    </div>
     <div class="note" id="note">Loading...</div>
-    <div class="error" id="error"></div>
-  </div>
+    <div class="error" id="error"></div>  </div>
 
   <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
   <script>
     // Config: replace these three values per environment (sandbox / live)
     const PADDLE_ENV = 'sandbox';
     const PADDLE_CLIENT_TOKEN = 'test_9c8e8126eaacb69f5ae3d2e0707';
-    const PRICE_ID = 'pri_01m53c1jt45fyp4yd4z5zynq6c';
+    const PRICE_IDS = {
+      monthly: 'pri_01m53c1jt45fyp4yd4z5zynq6c',
+      yearly: 'pri_01m5wsxckp9qgc7jzqnf4sh63a'
+    };
 
     const params = new URLSearchParams(window.location.search);
     const email = params.get('email') || '';
     const userId = params.get('uid') || '';
 
-    const btn = document.getElementById('subscribe-btn');
+    const planButtons = Array.from(document.querySelectorAll('.plan'));
+    const setEnabled = (on) => planButtons.forEach((b) => { b.disabled = !on; });
     const note = document.getElementById('note');
     const errorBox = document.getElementById('error');
 
@@ -58,20 +71,22 @@
         eventCallback: function (event) {
           if (event.name === 'checkout.completed') {
             note.textContent = 'Payment received. You can close this page and return to Rock-It.';
-            btn.disabled = true;
+            setEnabled(false);
           }
         }
       });
       note.textContent = email ? 'Subscribing as ' + email : '';
-      btn.disabled = false;
+      setEnabled(true);
     }
 
-    btn.addEventListener('click', function () {
-      Paddle.Checkout.open({
-        items: [{ priceId: PRICE_ID, quantity: 1 }],
+    planButtons.forEach(function (b) {
+      b.addEventListener('click', function () {
+        Paddle.Checkout.open({
+          items: [{ priceId: PRICE_IDS[b.dataset.plan], quantity: 1 }],
         customer: email ? { email: email } : undefined,
         customData: { supabase_user_id: userId },
-        settings: { displayMode: 'overlay', theme: 'dark', variant: 'one-page', locale: 'en' }
+          settings: { displayMode: 'overlay', theme: 'dark', variant: 'one-page', locale: 'en' }
+        });
       });
     });
   </script>
